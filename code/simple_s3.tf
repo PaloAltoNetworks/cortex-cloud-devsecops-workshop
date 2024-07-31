@@ -4,12 +4,12 @@ provider "aws" {
 
 resource "aws_s3_bucket" "dev_s3" {
   bucket_prefix = "dev-"
-  
+
   tags = {
     Environment          = "Dev"
-    git_commit           = "f0de9464efe6b3b3464a5ae341e2fa7fb63ebab9"
+    git_commit           = "65bce52d35e47aab59c6a01ba16804544bd63aea"
     git_file             = "code/simple_s3.tf"
-    git_last_modified_at = "2024-07-31 01:03:10"
+    git_last_modified_at = "2024-07-31 01:06:04"
     git_last_modified_by = "167754786+ced1011@users.noreply.github.com"
     git_modifiers        = "167754786+ced1011/tprendervill"
     git_org              = "ced1011"
