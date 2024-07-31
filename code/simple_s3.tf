@@ -4,7 +4,7 @@ provider "aws" {
 
 resource "aws_s3_bucket" "dev_s3" {
   bucket_prefix = "dev-"
-
+  acl = "public-read-write"
   tags = {
     Environment          = "Dev"
     git_commit           = "d4c35e0270bfd542051278ca30b4b3872c1ae0b2"
