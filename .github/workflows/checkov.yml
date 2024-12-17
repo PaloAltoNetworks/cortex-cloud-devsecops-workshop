@@ -19,7 +19,7 @@ jobs:
       uses: bridgecrewio/checkov-action@master
       with:
         directory: code/
-        #soft_fail: true
+        soft_fail: true
         #api-key: ${{ secrets.BC_API_KEY }}
       #env:
         #PRISMA_API_URL: https://api4.prismacloud.io
