@@ -3,7 +3,7 @@ metadata:
  id: "CKV2_TF_2"
  category: "GENERAL_SECURITY"
 definition:
-  - cond_type: "attribute"
-    resource_types: all
-    attribute: "tags.Environment"
-    operator: "exists"
+  cond_type: "attribute"
+  resource_types: all
+  attribute: "tags.Environment"
+  operator: "exists"
