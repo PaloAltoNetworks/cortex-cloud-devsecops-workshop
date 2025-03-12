@@ -26,6 +26,7 @@ resource "aws_ebs_volume" "web_host_storage" {
   #encrypted         = false  # Setting this causes the volume to be recreated on apply 
   size = 1
   
+  encrypted = true
 }
 
 resource "aws_ebs_snapshot" "example_snapshot" {
