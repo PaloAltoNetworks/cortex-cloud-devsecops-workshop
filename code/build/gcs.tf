@@ -9,17 +9,7 @@ resource "google_storage_bucket" "Example" {
   force_destroy = true
 
   uniform_bucket_level_access = false
-  labels = {
-    git_commit           = "1312da753697eb030b8914b7b192b1a81d0b8fc5"
-    git_file             = "code__build__gcs_tf"
-    git_last_modified_at = "2025-08-18-07-06-33"
-    git_last_modified_by = "52453932danielma911"
-    git_modifiers        = "52453932danielma911"
-    git_org              = "danielma911"
-    git_repo             = "prisma-cloud-devsecops-workshop"
-    yor_name             = "Example"
-    yor_trace            = "b71fbd0b-de17-4226-98e1-6b56de4d4db0"
-  }
+
 }
 
 resource "random_id" "Rand_suffix" {
