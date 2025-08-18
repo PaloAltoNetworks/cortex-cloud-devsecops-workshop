@@ -1,33 +1,23 @@
+  
 
-
-provider "google" {
-  project = qwiklabs-gcp-03-fa7edfd03d8e
-  region  = "us-central1"
-}
-
-resource "google_storage_bucket" "Example" {
-  name          = "demo2-${random_id.rand_suffix.hex}"
-  location      = "us-central1"
-  force_destroy = true
-
-  uniform_bucket_level_access = false
-  labels = {
-    git_commit           = "3524c9862732010f802917c5ebee215d838fb6de"
-    git_file             = "code__build__gcs_tf"
-    git_last_modified_at = "2025-08-18-06-43-15"
-    git_last_modified_by = "52453932danielma911"
-    git_modifiers        = "52453932danielma911"
-    git_org              = "danielma911"
-    git_repo             = "prisma-cloud-devsecops-workshop"
-    yor_name             = "Example"
-    yor_trace            = "cf1a1d91-f498-45cb-9167-8b32ce2494ce"
+  provider "google" {
+    project = "qwiklabs-gcp-03-fa7edfd03d8e"
+    region  = "us-central1"
   }
-}
 
-resource "random_id" "Rand_suffix" {
-  byte_length = 4
-}
+  resource "google_storage_bucket" "example" {
+    name          = "demo-${random_id.rand_suffix.hex}"
+    location      = "us-central1"
+    force_destroy = true
 
-output "Bucket_name" {
-  value = google_storage_bucket.Example.name
-}
+    uniform_bucket_level_access = false
+
+  }
+
+  resource "random_id" "rand_suffix" {
+    byte_length = 4
+  }
+
+  output "bucket_name" {
+    value = google_storage_bucket.example.name
+  }
