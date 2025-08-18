@@ -13,7 +13,7 @@ resource "google_storage_bucket" "example" {
   uniform_bucket_level_access = false
 
   labels = {
-    git_commit           = "7bb7bd9970879a92f950a2a63030d07a01d3a346"
+    git_commit           = "7f91e0492e5db79bcd3d9f50de95c901aea98526"
     git_file             = "code__build__gcs_tf"
     git_last_modified_at = "2025-08-18-06-54-46"
     git_last_modified_by = "52453932danielma911"
