@@ -1,5 +1,3 @@
-
-
 provider "google" {
   project = "qwiklabs-gcp-03-fa7edfd03d8e"
   region  = "us-central1"
