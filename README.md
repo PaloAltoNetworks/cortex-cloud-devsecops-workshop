@@ -1,2 +1,2 @@
-# prisma-cloud-devsecops-workshop
-DevSecOps with Prisma Cloud
+# cortex-cloud-devsecops-workshop
+DevSecOps with Cortex Cloud

@@ -1,64 +1,24 @@
-# Welcome
+# PANW032
+<p><img src="images/0_panw_logo.png" alt="0_panw_logo.png" width="100%" /></p>
+
+## Welcome
 
 This workshop will demonstrate how to leverage infrastructure as code (IaC) and DevSecOps patterns to automate, scale, and improve the security posture of cloud infrastructure and applications. We will create a pipeline that ensures our configurations are secure and compliant from code to cloud.
 
-This guide provides step-by-step instructions to integrate **Prisma Cloud** (and **checkov**) with **Terraform Cloud, GitHub, VScode** and **AWS**. 
-
-![](images/workshop-flow.png)
-
-![](images/devsecops-workflow.png)
+This guide provides step-by-step instructions to integrate **Cortex Cloud** (and **checkov**) with **Terraform Cloud, GitHub, VScode** and **GCP**. 
 
 
 
-## Table of Contents
+![workflow](images/devsecops-workflow.png)
 
-- [Welcome](#welcome)
-  - [Table of Contents ](#table-of-contents)
-  - [Learning Objectives](#learning-objectives)
-  - [DevSecOps](#devsecops)
-  - [Infrastructure as Code Using Terraform](#infrastructure-as-code-using-terraform)
 
-- [Section 0: Setup AWS Environment](#section-0-setup)
-  - [Prerequisites](#prerequisities)
-  - [Log into AWS Event Engine](#log-into-aws-event-engine)
-  - [Configure IAM User and API Key](#configure-iam-user-and-api-key)
-  - [Configure Cloud9](#configure-cloud9)
-
-- [Section 1: Code Scanning with checkov](#section-1-code-scanning-with-checkov)
-  - [Install checkov](#install-checkov)
-  - [Fork and clone target repository](#fork-and-clone-target-repository)
-  - [Scan with checkov](#scan-with-checkov)
-  - [Custom Policies](#custom-policies)
-  - [IDE plugin](#ide-plugin)
-  - [Integrate with GitHub Actions](#integrate-with-GitHub-actions)
-  - [View results in GitHub Security](#view-results-in-GitHub-secuirty)
-  - [Tag and Trace with yor](#tag-and-trace-with-yor)
-  - [Branch Protection Rules](#branch-protection-rules)
-  - [BONUS: Pre-commit hooks](#bonus-pre-commit-hooks)
-  - [Integrate workflow with Terraform Cloud](#integrate-workflow-with-terraform-cloud)
-  - [Block a Pull Request, Prevent a Deployment](#block-a-pull-request-prevent-a-deployment)
-  - [Deploy to AWS](#deploy-to-aws)
-
-- [Section 2: Application Security with Prisma Cloud](#section-2-application-security-with-prisma-cloud)
-  - [Welcome to Prisma Cloud](#welcome-to-prisma-cloud)
-  - [Onboard AWS account](#onboard-aws-account)
-  - [Integrations and Providers](#integrations-and-providers)
-  - [Checkov with API Key](#checkov-with-api-key)
-  - [Terraform Cloud Run Tasks](#terraform-cloud-run-tasks)
-  - [GitHub Application](#GitHub-application)
-  - [Submit a Pull Request 2.0](#submit-a-pull-request-20)
-  - [View scan results in Prisma Cloud](#view-scan-results-in-prisma-cloud)
-  - [Issue a PR Fix](#issue-a-pr-fix)
-  - [Drift Detection](#drift-detection)
-
-- [Wrapping Up](#wrapping-up)
 
 
 ## Learning Objectives
 - Gain an understanding of DevSecOps and infrastructure as code (IaC) using Terraform
 - Scan IaC files for misconfigurations locally
 - Set up CI/CD pipelines to automate security scanning and policy enforcement
-- Fix security findings and AWS resource misconfigurations with Prisma Cloud
+- Fix security findings and GCP resource misconfigurations with Cortex Cloud
 
 **Let’s start with a few core concepts...**
 
@@ -71,7 +31,49 @@ By leveraging DevOps foundations, security and development teams can build secur
 
 For DevSecOps to be successful for teams working to build and secure infrastructure, embracing existing tools and workflows is critical. At Palo Alto Networks, we’re committed to making it as simple, effective, and painless as possible to automate security controls and integrate them seamlessly into standard workflows.
 
+### Setup & requirements
 
+<p>To complete the lab, you will need:
+<ul>
+<li>An internet browser, preferably <a href="https://www.google.com/chrome/dr/download/">Google Chrome</a>.</li>
+</ul>
+</p>
+
+<ql-warningbox>
+<b>
+- Labs cannot be paused.<br>
+- If you click <code>End Lab</code> the lab environment is deleted.<br>
+- You can end the lab and start it again later, but your progress will not be saved.<br></b>
+</ql-warningbox>
+
+### Start the lab
+
+1. When you are ready, click the **Start Lab** button.
+    <img src="images/1_lab_start.png" alt="1_lab_start.png"  width="100%" />
+
+    <ql-infobox>
+    The lab will take several minutes to provision. Once the completed, you can log into the lab's Google Cloud console.       
+    </ql-infobox>
+    </br>
+
+2. Right-click **Console → Open Link in Incognito Window**. Use the credentials below to log into the Google Cloud console.
+
+    <img src="images/2_lab_open.png" alt="2_lab_open.png"  width="100%" />
+
+    | Credentials  | Value                 |
+    | ------------ | --------------------- |
+    | **Username** | {{{user_0.username}}} |
+    | **Password** | {{{user_0.password}}} |
+
+    <ql-warningbox>
+    It is highly recommended to open the cloud console in a browser with Incognito Mode enabled.  This avoids potentially working within a personal or corporate cloud account. 
+    </ql-warningbox>
+    </br>
+
+3. Accept the EULA agreements to finish signing in.
+    <img src="images/3_eula.png" alt="3_eula.png"  width="100%" />
+
+---
 
 
 ## Infrastructure as Code Using Terraform
@@ -79,16 +81,7 @@ Infrastructure as code (IaC) frameworks, such as  HashiCorp Terraform, make clou
 
 Terraform is useful for defining resource configurations and interacting with APIs in a codified, stateful manor. Any updates we want to make, such as adding more instances, or changes to a configuration, can be handled by Terraform. 
 
-For example, the following Terraform resource block defines a simple AWS S3 bucket:
-
-```hcl
-resource "aws_s3_bucket" "data" {
-  bucket     = "my_bucket_name"
-  acl        = "public-read-write"
-}
-```
-
-After performing `terraform init`, we can provision an S3 bucket with the following command:
+After performing `terraform init`, we can provision resources with the following command:
 
 ```bash
 terraform apply
@@ -98,123 +91,20 @@ Any changes made to the resource definition within a .tf file, such as adding ta
 
 Another benefit of using Terraform to define infrastructure is that code can be scanned for  misconfigurations before the resource is created. This allows for security controls to be integrated into the development process, preventing issues from ever being introduced, deployed and exploited.
 
-# Section 0: Setup AWS Environment
+## Section 0: Setup Dev Environment
 
-## Prerequisities
-- GitHub account
-- Terraform Cloud account
-- AWS account (provided during workshop)
-- Prisma Cloud account (OPTIONAL)
-
-## Log into AWS Event Engine
-> [!NOTE]
-> *This section is for live workshop events only.*
-
-Follow the link provided to you for Event Engine. Enter the event hash (if it is not already populated), and click `Accept Terms & Login`.
-
-![ee-login](images/ee-login.png)
-
-Choose your perferred sign-in method (OTP is recommended for workshop attendees).
-
-![ee-sign-in](images/ee-sign-in.png)
-
-Once logged in, copy the provided credentials into a local text file and then click `Open Console` to navigate to AWS.
-
-![ee-creds](images/ee-creds.png)
-
-## Configure IAM User and API Key
-
-From the AWS console, select `IAM` or search for 'IAM' in the Search bar if not displayed.
-
-![iam-console-home](images/iam-console-home.png)
-
-In the IAM Dashboard, click `Users` on the left sidebar.
-
-![iam-dashboard](images/iam-dashboard.png)
-
-Click the `Create User` button on the top right.
-
-![create-user](images/iam-create-user.png)
-
-Specify a `User name` that will be unique then click `Next`.
-
-![user-details](images/iam-user-details.png)
-
-Next, set the permissions for the user by selecting `Attach policies directly` and attaching the `AdministratorAccess` policy.
-
-![iam-set-perms](images/iam-set-perms.png)
-
-Review the user details and click `Create user`.
-
-![iam-review-create](images/iam-review-create.png)
-
-Now we need to assign an API key to the user we just created. Click on the user you just created from the IAM Dashboard and then click `Create access key` on the right.
-
-![iam-create-key](images/iam-create-key.png)
-
-Select `Other` from the Access Key options.
-
-![iam-key-options](images/iam-key-options.png)
-
-Optionally, supply a tag to associate with the Access Key, then click `Create access key`.
-
-![iam-key-tag-and-create](images/iam-key-tag-and-create.png)
-
-Finally, save the Access Key data provided (copy to a local file). This credential will be used to deploy resources to AWS in a later section. When ready, click `Done`.
-
-![iam-retrieve-key-data](images/iam-retrieve-key-data.png)
-
-An access key will now appear on the User details page.
-
-![iam-key-created](images/iam-key-created.png)
-
-
-## Configure Cloud9
-To ensure we all have the same environent configuration, we will use Cloud9, a cloud-delivered IDE from AWS, to carry out many of the steps in this workshop. To set this up, navigate back to the AWS Console home and select Cloud9 (or enter it into the Search bar).
-
-
-![c9-console-home](images/c9-console-home.png)
-
-On the Cloud9 Environments page, click `Create Environment`.
-
-![c9-create-env](images/c9-create-env.png)
-
-Enter a `Name` for the Environemnt and select `New EC2 instance` for Environment Type.
-
-![c9-env-options1](images/c9-env-options1.png)
-
-Select `Additional instance types` then choose `t3.medium` from the drop-down.
-
-![c9-env-options2](images/c9-env-options2.png)
-
-Leave all other options on default setting and click `Create`. 
-
-![c9-env-options3](images/c9-env-options3.png)
-
-
-Once the environment is created, navigate to it and click `Open in Cloud9` to launch the IDE.
-
-![c9-open-ide](images/c9-open-ide.png)
-
-Close all of the default windows, then create a New Terminal window.
-
-![c9-close-welcome](images/c9-close-welcome.png)
-
-![c9-open-term](images/c9-open-term.png)
-
-![c9-blank-term](images/c9-blank-shell.png)
-
-Congrats! Cloud9 is now ready to use. Before installing checkov or pulling code to scan, create and activate a python virtual environment to better organize python packages.
+1. Click **Activate Cloud Shell** at the top of the Google Cloud console. 
+   
+   <img src="images/cloudshell.png" alt="cloudshell.png"  width="85%" />
+Before installing checkov or pulling code to scan, create and activate a python virtual environment to better organize python packages.
 
 ``` 
 python3 -m venv env
 source ./env/bin/activate 
 ```
 
-![c9-py-venv](images/c9-py-venv.png)
-
 ##
-# Section 1: Code Scanning with checkov
+## Section 1: Code Scanning with checkov
 
 [Checkov](https://checkov.io) is an open source 'policy-as-code' tool that scans cloud infrastructure defintions to find misconfigurations before they are deployed. Some of the key benefits of checkov:
 1. Runs as a command line interface (CLI) tool 
@@ -230,18 +120,13 @@ To get started, install checkov using pip:
 pip3 install checkov
 ```
 
-![](images/c9-install-checkov.png)
-
-
-
-
 Use the `--version` and `--help` flags to verify the install and view usage / optional arguements.
 
 ```
 checkov --version
 checkov --help
 ```
-![](images/c9-checkov-options.png)
+![checkovopt](images/checkovversion.png)
 
 To see a list of every policy that checkov can enforce, use the `-l` or ` --list` options.
 
@@ -254,28 +139,28 @@ Now that you see what checkov can do, let's get some code to scan...
 
 
 ## Fork and clone target repository
-This workshop involves code that is vulnerable-by-design. All of the necessary code is contained within [this repository](https://GitHub.com/paloAltoNetworks/prisma-cloud-devsecops-workshop) or workshop guide itself.
+This workshop involves code that is vulnerable-by-design. All of the necessary code is contained within [this repository](https://GitHub.com/paloAltoNetworks/cortex-cloud-devsecops-workshop) or workshop guide itself.
 
-To begin, log into GitHub and navigate to the [Prisma Cloud DevSecOps Workshop](https://GitHub.com/paloAltoNetworks/prisma-cloud-devsecops-workshop) repository. Create a `Fork` of this repository to create a copy of the code in your own account.
+To begin, log into GitHub and navigate to the [Cortex Cloud DevSecOps Workshop](https://GitHub.com/paloAltoNetworks/cortex-cloud-devsecops-workshop) repository. Create a `Fork` of this repository to create a copy of the code in your own account.
 
-![](images/gh-fork.png)
+![fork](images/gh-fork.png)
 
 Ensure the selected `Owner` matches your username, then proceed to fork the repository by clicking `Create fork`.
 
-![](images/gh-create-fork.png)
+![gh-fork](images/gh-create-fork.png)
 
 Grab the repo URL from GitHub, then clone the **forked** repository to Cloud9.
 
-![](images/gh-clone.png)
+![gh-clone](images/gh-clone.png)
 
 ```
-git clone https://github.com/<your-organization>/prisma-cloud-devsecops-workshop.git
-cd prisma-cloud-devsecops-workshop/
+git clone https://github.com/<your-organization>/cortex-cloud-devsecops-workshop.git
+cd cortex-cloud-devsecops-workshop/
 git status
 
 ```
 
-![](images/c9-git-clone.png)
+![git-clone](images/c9-git-clone.png)
 
 
 Great! Now we have some code to scan. Let's jump in...
@@ -296,33 +181,28 @@ Let's start by scanning the entire `./code` directory and viewing the results.
 cd code/
 checkov -d .
 ```
-![](images/c9-checkov-d.png)
+![alt](images/checkov-d.png)
 
 Failed checks are returned containing the offending file and resource, the lines of code that triggered the policy, and a guide to fix the issue.
 
-![](images/checkov-result.png)
+![alt](images/checkov-failed.png)
 
 Now try running checkov on an individual file with `checkov -f <filename>`. 
 
 ```
-checkov -f deployment_ec2.tf
+checkov -f deployment_gce.tf
 ```
 ```
-checkov -f simple_ec2.tf
+checkov -f vertex.tf
 ```
-
-> **⍰  Question** 
->
-> Why are there more security findings for `deployment_ec2.tf` than there are for `simple_ec2.tf`? What about `simple_s3.tf` vs `simple_ec2.tf`?
-
 
 Policies can be optionally enforced or skipped with the `--check` and `--skip-check` flags. 
 
 ```
-checkov -f deployment_s3.tf --check CKV_AWS_18,CKV_AWS_52
+checkov -f deployment_gce.tf --check CKV_GCP_39,CKV_GCP_3
 ```
 ```
-checkov -f deployment_s3.tf --skip-check CKV_AWS_18,CKV_AWS_52
+checkov -f deployment_gce.tf --skip-check CKV_GCP_39,CKV_GCP_3
 ```
 
 Frameworks can also be selected or omitted for a particular scan.
@@ -335,7 +215,7 @@ checkov -d . --framework secrets --enable-secret-scan-all-files
 checkov -d . --skip-framework dockerfile
 ```
 
-![](images/checkov-secrets.png)
+![alt](images/checkov-scan.png)
 
 
 Lastly, enforcement can be more granularly controlled by using the `--soft-fail` option. Applying `--soft-fail` results in the scan always returning a 0 exit code. Using `--hard-fail-on` overrides this option. 
@@ -349,77 +229,17 @@ checkov -d . ; echo $?
 checkov -d . --soft-fail ; echo $?
 ```
 
-An example of using `--soft-fail` and exit codes in a pipeline context will be demosntrated in a later section.
-
-
-## Custom Policies
-
-Checkov supports the creation of [Custom Policies](https://www.checkov.io/3.Custom%20Policies/YAML%20Custom%20Policies.html) for users to customize their own policy and configuration checks. Custom policies can be written in YAML (recommended) or python and applied with the `--external-checks-dir` or `--external-checks-git` flags. 
-
-Let's create a custom policy to check for [local-exec and remote-exec Provisioners](https://developer.hashicorp.com/terraform/language/resources/provisioners/local-exec) being used in Terraform resource definitons. (Follow link to learn more about provisioners and why it is a good idea to check for them).
-
-```yaml
-metadata:
- name: "Terraform contains local-exec and/or remote-exec provisioner"
- id: "CKV2_TF_1"
- category: "GENERAL_SECURITY"
-definition:
- and:
-  - cond_type: "attribute"
-    resource_types: all 
-    attribute: "provisioner/local-exec"
-    operator: "not_exists"
-  - cond_type: "attribute"
-    resource_types: all
-    attribute: "provisioner/remote-exec"
-    operator: "not_exists"
-```
-Add the above code to a new file within a new direcotry.
-
-```
-mkdir custom-checks/
-vim custom-checks/check.yaml
-```
->[!TIP]
-> use `echo '$(file_contents)' > custom-checks/check.yaml` if formatting is an issue with vim.
-
-
-Save the file. Then run checkov with the `--external-checks-dir` to test the custom policy.
-
-```
-checkov -f simple_ec2.tf --external-checks-dir custom-checks
-```
-![](images/checkov-custom-checks.png)
-
-**Challenge:** write a custom policy to check all resources for the presence of tags. Specifically, ensure that a tag named "Environment" exists.
-
-
-## IDE plugin
-> [!NOTE]
-> *Demo Only. Requires API key for Prisma Cloud.*
->
-> Link to docs: [Prisma Cloud IDE plugins](https://docs.prismacloud.io/en/classic/appsec-admin-guide/get-started/connect-your-repositories/integrate-ide/integrate-ide)
->
-> Link to docs: [VScode extension](https://marketplace.visualstudio.com/items?itemName=Bridgecrew.checkov)
-
-Enabling checkov in an IDE provides real-time scan results and inline fix suggestions to developers as they create cloud infrastructure and applications.
-
-![](images/vscode-extension.png)
-
-![](images/vscode-ide1.png)
-
-![](images/vscode-ide2.png)
 
 
 ## Integrate with GitHub Actions
 Now that we are more familiar with some of checkov's basic functionality, let's see what it can do when integrated with other tools like GitHub Actions.
 
-You can leverage GitHub Actions to run automated scans for every build or specific builds, such as the ones that merge into the master branch. This action can alert on misconfigurations, or block code from being merged if certain policies are violated. Results can also be sent to Prisma Cloud and other sources for further review and remediation steps.
+You can leverage GitHub Actions to run automated scans for every build or specific builds, such as the ones that merge into the master branch. This action can alert on misconfigurations, or block code from being merged if certain policies are violated. Results can also be sent to Cortex Cloud and other sources for further review and remediation steps.
 
 Let's begin by setting an action from the repository page, under the `Actions` tab. Then click on `set up a workflow yourself ->` to create a new action from scratch.
 
 
-<img src="images/gh-actions-new-workflow.png" width="800" height="300" /> 
+![alt](images/gh-actions1.png)
 
 Name the file `checkov.yaml` and add the following code snippet into the editor.
 
@@ -446,9 +266,6 @@ jobs:
       with:
         directory: code/
         #soft_fail: true
-        #api-key: ${{ secrets.BC_API_KEY }}
-      #env:
-        #PRISMA_API_URL: https://api4.prismacloud.io
         
     - name: Upload SARIF file
       uses: GitHub/codeql-action/upload-sarif@v3
@@ -463,12 +280,12 @@ jobs:
 
 Once complete, click `Commit changes...` at the top right, then select `commit directly to the main branch` and click `Commit changes`.
 
-![](images/gh-action-edit.png)
+![alt](images/gh-checkov-up.png)
 
 
 Verify that the action is running (or has run) by navigating back to the `Actions` tab.
 
-![](images/gh-actions-workflows.png)
+![alt](images/gh-action.png)
 
 
 > **⍰  Question** 
@@ -478,9 +295,9 @@ Verify that the action is running (or has run) by navigating back to the `Action
 
 View the results of the run by clicking on the `Create checkov.yaml` link.
 
-![](images/gh-actions-results.png)
+![alt](images/gh-failure.png)
 
-Notice the policy violations that were seen earlier in CLI/Cloud9 are now displayed here. However, this is not the only place they are sent...
+Notice the policy violations that were seen earlier in Cloudshell are now displayed here. However, this is not the only place they are sent...
 
 ## View results in GitHub Secuirty 
 Checkov natively supports SARIF format and generates this output by default. GitHub Security accepts SARIF for uploading security issues. The GitHub Action created earlier handles the plumbing between the two.
@@ -488,11 +305,11 @@ Checkov natively supports SARIF format and generates this output by default. Git
 
 Navigate to the `Security` tab in GitHub, the click `Code scanning` from the left sidebar or `View alerts` in the **Security overview > Code scanning alerts** section.
 
-![](images/ghas-overview.png)
+![alt](images/gh-overviews.png)
 
 The security issues found by checkov are surfaced here for developers to get actionable feedback on the codebase they are working in without having to leave the platform. 
 
-![](images/ghas-code-scanning-results.png)
+![alt](images/gh-alerts.png)
 
 
 > [!TIP]
@@ -500,573 +317,443 @@ The security issues found by checkov are surfaced here for developers to get act
 
 
 
-## Tag and Trace with yor
-[Yor](yor.io) is another open source tool that can be used for tagging and tracing IaC resources from code to cloud. For example, yor can be used to add git metadata and a unique hash to a terraform resource; this can be used to better manage resource lifecycles, improve change management, and ultimately to help tie code defintions to runtime configurations.
-
-Create new file in the GitHub UI under the path `.github/workflows/yor.yaml`. 
-
-![](images/gh-new-file.png)
-
-Add the following code snippet:
-
-```yaml
-name: IaC tag and trace
-
-on:
-  push:
-  pull_request:
-
-jobs:
-  yor:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-  
-    steps:
-      - uses: actions/checkout@v2
-        name: Checkout repo
-        with:
-          fetch-depth: 0
-      - name: Run yor action
-        uses: bridgecrewio/yor-action@main
-
-```
-
-This time, click `Commit changes...` at the top right, then select `Create a new branch` and click `Propose changes`. Click `Create pull request` on the next screen.
-
-
-Check that the action is running, queued, or finished under the `Actions` tab.
-
-More importanly, look at what yor updated by following the commit history and viewing any `.tf` file in the `code/` directory.
-
-<img src="images/yor-tags.png" width="600" height="500" /> 
-
-
-Notice the `yor_trace` tag? This can be used track "drift" between IaC definitons and runtime configurations.
-
-## Branch Protection Rules
-Using Branch Protection Rules allows for criteria to be set in order for pushes and pull requests to be merged to a given branch. This can be set up to run checkov and block merges if there are any misconfigurations or vulnerabilities. 
-
-Within GitHub, go to the `Settings` tab and navigate to `Branches` on the left sidebar, then click `Add branch protection rule`.
-
-![](images/gh-branch-protection.png)
-
-Enter `main` as the `Branch name pattern`. Then select `Require status checks to pass before merging`, search for `checkov` in the provided search bar and select it as a required check. Leave the rest as default (unchecked), then click `Create`.
-
-![](images/gh-bp-rule.png)
-
-
-
-## BONUS: Pre-commit Hooks
-Checkov can also be configured as a pre-commit hook. Read how to set up [here!](https://www.checkov.io/4.Integrations/pre-commit.html)
-
-
 ## Integrate workflow with Terraform Cloud
-Let's continue by integrating our GitHub repository with Terraform Cloud. We will then use Terraform Cloud to deploy IaC resource to AWS.
+Let's continue by integrating our GitHub repository with Terraform Cloud. We will then use Terraform Cloud to deploy IaC resource to GCP.
 
 Navigate to [Terraform Cloud](app.terraform.io) and sign in / sign up. The community edition is all that is needed for this workshop.
 
 Once logged in, follow the prompt to set up a new organization.
 
-![](images/tfc-welcome.png)
+![alt](images/tfc-welcome.png)
 
 Enter an `Organization name` and provide your email address.
 
 
-<img src="images/tfc-org-details.png" width="700" height="500" /> 
+<img src="images/tfc-org-details.png" alt="image.png" width="700" height="500" /> 
 
 Create a workspace using the `Version Control Workflow` option.
 
-![](images/tfc-vcs-workflow.png)
+![alt](images/tfc-vcs-workflow.png)
 
 Select `GitHub`, then `GitHub.com` from the dropdown. Authenticate and authorize the GitHub.
 
 
-<img src="images/tfc-add-github.png" width="600" height="450" /> 
+<img src="images/tfc-add-github.png" alt="image.png" width="600" height="450" /> 
 
-Choose the `prisma-cloud-devsecops-workshop` from the list of repositories.
+Choose the `cortex-cloud-devsecops-workshop` from the list of repositories.
 
-![](images/tfc-add-repo.png)
+![alt](images/tfc-add-repo.png)
 
 Add a `Workspace Name` and click `Advanced options`.
 
 
-<img src="images/tfc-workspace1.png" width="500" height="600" /> 
+<img src="images/tfc-workspace1.png" alt="image.png" width="500" height="600" /> 
 
 In the `Terraform Working Directory` field, enter `/code/build/`. Select `Only trigger runs when files in specified paths change`.
 
 
-<img src="images/tfc-workspace2.png" width="500" height="600" />
+<img src="images/tfc-workspace2.png" alt="image.png" width="500" height="600" />
 
 Leave the rest of the options as default and click `Create`.
 
-<img src="images/tfc-workspace3.png" width="500" height="400" />
+<img src="images/tfc-workspace3.png" alt="image.png" width="500" height="400" />
 
-Almost done. In order to deploy resources to AWS, we need to provide Terraform Cloud with AWS credentials. We need to add our credentials as workspace variables. Click `Continue to workspace overview` to do continue. 
+Almost done. In order to deploy resources to GCP, we need to provide Terraform Cloud with GCP credentials. We need to add our credentials as workspace variables. Click `Continue to workspace overview` to do continue. 
 
-![](images/tfc-workspace-created.png)
+![alt](images/tfc-workspace-created.png)
 
 Click `Configure variables`
 
-<img src="images/tfc-configure-variables.png" width="700" height="450" />
+<img src="images/tfc-configure-variables.png" alt="image.png" width="700" height="450" />
 
-Add variables for `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. Ensure you select `Environment variables` for both and that `AWS_SECRET_ACCESS_KEY` is marked as `Sensitive`.
+Add variable for `GOOGLE_CREDENTIALS` Ensure you select `Environment variables` and is marked as `Sensitive`.
 
-![](images/tfc-vars1.png)
+<ql-infobox>
+<b>
+Terraform Cloud Variable only support in oneline value, for Google service account credentials JSON would need to convert into oneline format to meet the requirement. 
+</b>
+</ql-infobox>
+<br>
+</br>
+In order to create and convert the JSON format into expected format, we need go through below steps. 
+
+Go to Google Console, `IAM & Admin -> Service Accounts`, look for the service account start with `qwiklabs-gcp-******iam.gserviceaccount.com`.
+
+
+![alt](images/gcp-sa.png)
+
+Click the Service Account and go the `Key` tab to create a new Key. Choose the `JSON` as the key format. It will be download to your local machine.
+
+![alt](images/gcp-key.png)
+Go to Google Cloud Shell, run below command:
+```sh
+nano convert_gcp_key.sh
+```
+Paste below shell code 
+```sh
+#!/bin/bash
+
+echo "Paste your GCP service account JSON content below."
+echo "(When done, press Ctrl+D to finish input)"
+echo
+
+# Read multi-line input from stdin until EOF, then convert to single-line JSON
+input=$(cat)
+echo "$input" | jq -c .
+```
+Save the code, and add permission to the shell script and run it in the Cloudshell:
+```sh
+chmod +x convert_gcp_key.sh
+./convert_gcp_key.sh
+```
+
+The instruction of the script wii be shown like below
+```sh
+Paste your GCP service account JSON content below.
+(When done, press Ctrl+D to finish input)
+```
+Follow the instruction, open the JSON credential you download previously with any text editor, and copy the content and paste into the Cloudshell, and then press Ctrl+D to finish input.
+
+The correct format of oneline credential will be shown in the Cloudshell output.
+Copy the output and paste as the value of `GOOGLE_CREDENTIALS`
+
+![alt](images/tf-var1.png)
 
 Review the variables then return the your workspace overview when finished.
 
-![](images/tfc-vars2.png)
+![alt](images/tf-var2.png)
 
 Terraform Cloud is now configured and our pipeline is ready to go. Let's test this out by submitting a pull request.
 
+We have now configured a GitHub repository to integrate with Terraform Cloud to deploy infrastructure. Let's see how this works in action.
 
-## Block a Pull Request, Prevent a Deployment
-We have now configured a GitHub repository to be scanned with checkov and to trigger Terraform Cloud to deploy infrastructure. Let's see how this works in action.
+Create a new file in the GitHub UI under the path `code/build/gcs.tf`. Enter the following code snippet into the new file. 
 
-Create a new file in the GitHub UI under the path `code/build/s3.tf`. Enter the following code snippet into the new file. 
-
-
-```hcl
-provider "aws" {
-  region = "us-west-2"
+<ql-code>
+<ql-code-block language="terraform" tabTitle="Terraform" templated>
+provider "google" {
+  project = "{{{project_0.project_id|pending}}}"
+  region  = "us-central1"
 }
 
-resource "aws_s3_bucket" "dev_s3" {
-  bucket_prefix = "dev-"
+resource "google_storage_bucket" "example" {
+  name          = "demo-${random_id.rand_suffix.hex}"
+  location      = "us-central1"
+  force_destroy = true
 
-  tags = {
-    Environment      = "Dev"
-  }
+  uniform_bucket_level_access = false
+  public_access_prevention = "enforced"
 }
 
-resource "aws_s3_bucket_ownership_controls" "dev_s3" {
-  bucket = aws_s3_bucket.dev_s3.id
-  rule {
-    object_ownership = "BucketOwnerPreferred"
-  }
+resource "random_id" "rand_suffix" {
+  byte_length = 4
 }
 
-```
+output "bucket_name" {
+  value = google_storage_bucket.example.name
+}
+</ql-code-block>
+</ql-code>
+
 
 Once complete, click `Commit changes...` at the top right, then select `Create a new branch and start a pull request` and click `Propose changes`.
 
-![](images/gh-pr.png)
+![alt](images/gcs-tf-cr.png)
 
 At the next screen, review the diff then click `Create pull request`.
 
-![](images/gh-create-pr.png)
+![alt](images/gcs-tf-pr.png)
 
 One more time... click  `Create pull request` to open the PR.
 
-![](images/gh-open-pr.png)
+![alt](images/gcs-tf-pr2.png)
 
-Wait for the checks to run. Then take note of the result: a blocked pull request!
+Wait for the checks to run. Then take note of the result: Terraform Cloud has verified the new gcs.tf file.
 
-![](images/gh-blocked-pr.png)
+![alt](images/merge.png)
 
-Either bypass branch protections and `Merge pull request` or go back to the GitHub Action for checkov and uncomment the line with `--soft-fail=true`. This will require closing and reopening the pull request.
-
-> **⍰  Question** 
->
-> What other command options could be used to get the pipeline to pass?
+You can click `Merge pull request` This will accept and close the pull request.
 
 
-## Deploy to AWS
+## Deploy to GCP
 Navigate to Terraform Cloud and view the running plan.
 
-![](images/tfc-run-queued.png)
+![alt](images/tf-cloud-apply.png)
 
-Once finished, click `Confirm & apply` to deploy the s3 bucket to AWS.
+Once finished, click `Confirm & apply` to deploy the gcs bucket to GCP.
 
-![](images/tfc-apply.png)
+![alt](images/tfc-deploy.png)
 
-Go to the S3 menu within AWS to view the bucket that has been deployed.
+Go to the GCS menu within GCP to view the bucket that has been deployed.
 
-![](images/aws-s3.png)
-
-
-> **⍰  Question** 
->
-> Given that we only supplied the s3 bucket with a prefix and not a specific bucket name, how can you tell which s3 bucket is the one *you* deployed?
-
-> [!TIP]
-> We used a tool to tag IaC resources...
+![alt](images/gcs-deployed.png)
 
 
-Now let's see how we can leverage Prisma Cloud to make this all easier, gain more featues and scale security at ease.
+
+
+Now let's see how we can leverage Cortex Cloud to make this all easier, gain more featues and scale security at ease.
 
 ##
-# Section 2: Application Security with Prisma Cloud
+## Section 2: Application Security with Cortex Cloud
 > [!NOTE]
-> *This portion of the workshop is intended to be view-only. Those with existing access to Prisma Cloud can follow along but is not recommended to onboard any of the workshop content into a production deployment of Prisma Cloud. Use this guide as an example and the content within for demonstration purposes only.*
+> *This portion of the workshop is intended to be view-only. Those with existing access to Cortex Cloud can follow along but is not recommended to onboard any of the workshop content into a production deployment of Cortex Cloud. Use this guide as an example and the content within for demonstration purposes only.*
 
-## Welcome to Prisma Cloud
-![](images/prisma-welcome.png)
+## Welcome to Cortex Cloud
+![alt](images/cc_dashboard.png)
 
-Prisma Cloud is a Cloud Native Application Protection Platform (CNAPP) comprised of three main pillars:
-- Cloud Security
-- Runtime Security
-- Application Security
+Cortex Cloud’s comprehensive security solution helps you take a platform-based, proactive approach to securing your cloud estate from Code to Cloud to SOC. It provides real-time cloud security that allows you to investigate and remediate your cloud security issues from a single platform with all the signals in a single data lake.
 
-Across these three "modules", Prisma Cloud provides comprehensive security capabilities spanning code to cloud. This workshop will mainly focus on the Application Security module within the Prisma Cloud platform.
+Cortex Cloud is an easily extensible platform to consolidate Application Security, Cloud Posture Security, Runtime Security, and Security Operations (SOC). It is enterprise-ready for regulated organizations with data residency preserving scanning worldwide. It provides consolidated and flexible reporting for executives and operators for all cloud security postures. It also includes an AI Copilot across the platform to simplify your day-to-day activities.
+- Application Security: Prevent issues from getting into your production environment.
 
-## Onboard AWS Account
+- Cloud Posture Security: Reduce and prioritize risks already present in your cloud environment.
+
+- Cloud Runtime: Stop an attacker from exploiting risks present in your cloud environment.
+
+- SOC: Detect and respond.
+## Onboard GCP Account
 > [!NOTE]
-> Link to docs: [Onboard AWS Account](https://docs.prismacloud.io/en/enterprise-edition/content-collections/connect/connect-cloud-accounts/onboard-aws/onboard-aws-account)
+> Link to docs: [Onboard GCP Account](https://docs-cortex.paloaltonetworks.com/r/Cortex-CLOUD/Cortex-Cloud-Posture-Management-Documentation/Ingest-cloud-assets)
 
-To begin securing resources running in the cloud, we need to configure Prisma Cloud to communitcate with a CSP. Let's do this by onboarding an AWS Account.
+To begin securing resources running in the cloud, we need to configure Cortex Cloud to communitcate with a CSP. Let's do this by onboarding an GCP Account.
 
-Navigate to **Settings > Providers > Connect Provider** and follow the instructions prompted by the conifguration wizard.
+Navigate to **Settings > Data Sources > Cloud Servcie Provider > Google Cloud Platform(GCP)** and follow the instructions prompted by the conifguration wizard.
 
-![](images/prisma-cloud-account.png)
+Choose **Project** for the scope, select **Cloud Scan** as the Scan Mode, leave the rest as default and click **Save**.
+![alt](images/gcp-account.png)
 
-Select **Amazon Web Services**.
+Click **Download Terraform**, an terraform template file will be download to your local machine.
 
-![](images/prisma-csp-onboarding.png)
+![alt](images/onboard-tf.png)
 
-Choose **Account** for the scope, deselect **Agentless Workload Scanning**, leave the rest as default and click **Done**.
+<ql-infobox>
+  Installed Terraform on your local machine (if you don't have it installed). You can download Terraform from the official Terraform [website](https://www.terraform.io/downloads.html) and follow the installation instructions for your operating system.
+</ql-infobox>
 
-![](images/prisma-aws1.png)
+Open your local terminal (Command prompt, PowerShell, or Terminal). Log in to your GCP account using the gcloud CLI:
+```sh
+gcloud auth login
+```
 
-Provide your **Account ID** and enter an **Account Name**. Then click **Create IAM Role** to have Prisma Cloud auto-configure itself.
+Create a directory on your local machine to store and run the Terraform code. If you have more than one GCP connector, you need a separate directory for each one. Extract the Terraform files. Ensure all necessary Terraform files are present (main.tf, template_params.tfvars, etc).
+```sh
+mkdir -p ~/terraform/gcp-connector-1
+cd ~/terraform/gcp-connector-1
+tar -xzvf <your_template>.tar.gz
+terraform init
+```
 
-![](images/prisma-aws2.png)
+Apply your Terraform configuration using the downloaded parameter file. When prompted, enter the project ID if you configured one in the onboarding wizard:
+```sh
+terraform apply --var-file=template_params.tfvars
+```
+The Terraform template is deployed. When the template is successfully uploaded to GCP, the initial discovery scan is started. When the scan is complete, you can view your cloud assets in **Asset Inventory**.
 
-Scroll to the bottom of the AWS page that opens, click to **acknowledge** the disclaimer and then click **Create stack**.
-
-![](images/aws-create-stack.png)
-
-Wait a moment while the stack is created, we need an output from the final result of the stack being deployed.
-
-![](images/prisma-cfn.png)
-
-Once created, go to the **Outputs** tab and copy the value of ARN displayed.
-
-![](images/prisma-cfn-output.png)
-
-Head back to Prisma Cloud and paste this value into the **IAM Role ARN** field, then click **Next**.
-
-![](images/prisma-aws3.png)
-
-Wait for the connectivity test to run, review the status and click **Save and Close**.
-
-![](images/prisma-aws4.png)
-
-View the onboarded cloud account under **Settings > Providers**.
-
-![](images/prisma-aws-added.png)
-
-Prisma Cloud will now begin to scan the configured AWS Account for misconfigurations associated with deployed resources. Let the initial scan run in the background and we will come back to this in a later section.
+![alt](images/gcp-assets.png)
 
 ## Integrations and Providers
-Prisma Cloud has a wide variety of built-in integrations to help operationalize within a cloud ecosystem.
+Cortex Cloud has a wide variety of built-in integrations to help operationalize within a cloud ecosystem.
 
-Navigate to `Settings` at the top, then select `Providers` from the left sidebar. Click the `Connect Provider` button on the top right.
+Navigate to `Settings`, then select `Data Collection` from the left sidebar. 
 
-![](images/prisma-code-build-providers.png)
+![alt](images/Integrations2.png)
 
 Notice all of the different tools that can be integrated natively.
 
-![](images/prisma-connect-providers.png)
-
-Let's start by integrating with checkov.
+![alt](images/integrations1.png)
 
 
-## Checkov with API Key
-> [!NOTE] 
-> Link to docs: [Creating Access Keys for Prisma Cloud](https://docs.prismacloud.io/en/enterprise-edition/content-collections/administration/create-access-keys)
->
-> Link to docs: [Add Checkov to Prisma Cloud](https://docs.prismacloud.io/en/classic/appsec-admin-guide/get-started/connect-your-repositories/ci-cd-runs/add-checkov)
-
-To generate an API key, navigate to **Settings > Access Control**. Click the `Add` button and select `Access Key`.
-
-![](images/prisma-access-control.png)
-
-Download the csv file containing the credentials then click `Done`.
-
-<img src="images/prisma-create-access-key.png" width="400" height="300" />
-
-
-
-![](images/prisma-access-key-created.png) 
-
-In a terminal window run checkov against the entire `code` directory, now with an API key. Use the following command:
-
-> [!WARNING]
-> Replace the `access_key_id`, `secret_key` and `prisma-api-url` with your values.
-
-```
-checkov -d . --bc-api-key <access_key_id::<secret_key> --repo-id prisma/devsecops-workshop --prisma-api-url https://api4.prismacloud.io
-```
-
-![](images/c9-checkov-api-key.png)
-
-Notice how the results now contain a severity. There are some other features that come with Prisma Cloud (using an API key) as well... 
-
-Return back to Prisma Cloud to view the results that checkov surfaced in the platform. Navigate to **Application Security > Projects**.
-
-![](images/prisma-checkov-results.png)
-
-Let's add this same API key to the GitHub Action created earlier. Within your GitHub repository, go to **Settings > Secrets and variables** then select **Actions**. 
-
-![](images/GitHub-secrets.png)
-
-Click `New repository secret` then input the secret value of `<access_key_id>::<secret_key>` pair.
-
-![](images/github-repo-secret.png)
-
-![](images/github-create-secret.png)
-
-Edit `checkov.yaml`, remove comments for `api-key` and `PRISMA_API_URL`.
-
-![](images/gh-edit-checkov.png)
-
-Commit directly to main branch.
-
-<img src="images/gh-commit-directly.png" width="375" height="400" />
-
-Now check the results under **Security > Code scanning**. The same findings that displayed here earlier now with a **Severity** to sort and prioritze with.
-
-![](images/gh-security-results.png)
-
-Return again to Prisma Cloud to view the results that were sent to the the platform.
-
-![](images/prisma-gha-results.png)
-
-> [!TIP]
-> You can use Prisma Cloud (checkov w/ an API key) to scan docker images for vulnerabilities! Use the `--docker-image` flag and point to an image name or ID.
 
 ## Terraform Cloud Run Tasks
 > [!NOTE] 
-> Link to docs: [Connect Terraform Cloud - Run Tasks](https://docs.prismacloud.io/en/enterprise-edition/content-collections/application-security/get-started/connect-code-and-build-providers/ci-cd-runs/add-terraform-run-tasks)
+> Link to docs: [Connect Terraform Cloud - Run Tasks](https://docs-cortex.paloaltonetworks.com/r/Cortex-CLOUD/Cortex-Cloud-Runtime-Security-Documentation/Onboard-Terraform-Cloud-Run-Tasks)
 
-Let's now connect Prisma Cloud with Terraform Cloud using the Run Tasks integration. This allows for developers and platform teams to get immediate security feedback for every pipeline run. The Run Task integration will also surface results of every pipeline run to Prisma Cloud and the Security team.
+Let's now connect Cortex Cloud with Terraform Cloud using the Run Tasks integration. This allows for developers and platform teams to get immediate security feedback for every pipeline run. The Run Task integration will also surface results of every pipeline run to Cortex Cloud and the Security team.
 
 First we need to create an API key in Terraform Cloud. Go to the Terraform Cloud console and navigate to **User Settings > Tokens** then click **Create an API Token**.
 
-![](images/tfc-create-token.png)
+![alt](images/tfc-create-token.png)
 
 Name the token something meaningful, then click **Generate token**.
 
-![](images/tfc-token-created.png)
+![alt](images/tfc-token-created.png)
 
-Copy the token and save the value somewhere safe. This will be provided to Prisma Cloud in the next step.
+Copy the token and save the value somewhere safe. This will be provided to Cortex Cloud in the next step.
 
-Go to the Prisma Cloud console and navigate to **Settings > Connect Provider > Code & Build Providers** to set up the integration.
+Go to the Cortex Cloud console and navigate to **Settings > Data Sources > HCP Terraform Run Tasks** to set up the integration. Click **+Add New Instance**
 
-![](images/prisma-code-build-providers.png)
+![alt](images/hcp0.png)
 
-Under **CI/CD Runs**, choose **Terraform Cloud (Run Tasks)**.
 
-<img src="images/prisma-tfc-rt.png" width="600" height="500" />
 
 Enter the API token generated in Terraform Cloud and click **Next**.
 
-<img src="images/prisma-tfc-token.png" width="600" height="500" />
+![alt](images/hcp1.png)
 
 Select your **Organization**.
 
-<img src="images/prisma-tfc-org.png" width="600" height="500" />
+![alt](images/hcp2.png)
 
-Select your **Workspace** and choose the **Run Stage** in which you want Prisma Cloud to execute a scan. `Pre-plan` will scan HCL code, `Post-plan` will scan the Terraform plan.out file.
+Select your **Workspace** and choose the **Run Stage** in which you want Cortex Cloud to execute a scan. `Pre-plan` will scan HCL code, `Post-plan` will scan the Terraform plan.out file.
 
-<img src="images/prisma-tfc-workspace.png" width="600" height="500" />
+![alt](images/hcp3.png)
 
-> **⍰  Question** 
->
-> What are some advantages and/or limitations between scanning HCL files and scanning plan.out files?
 
-Once completed, click **Done**.
+Once completed, click **Save**.
 
-<img src="images/prisma-tfc-done.png" width="600" height="500" />
+Return back to Terraform Cloud to view the integration. 
 
-Return back to Terraform Cloud to view the integration. Go to your **Workspace** and click **Settings > Run Tasks**. 
+![alt](images/hcp-done.png)
+Go to your **Workspace** and click **Settings > Run Tasks**. 
 
-![](images/tfc-run-task-created.png)
+![alt](images/runtask.png)
 
 
 
 ## GitHub Application
 > [!NOTE] 
-> Link to docs: [Connect GitHub](https://docs.prismacloud.io/en/enterprise-edition/content-collections/application-security/get-started/connect-code-and-build-providers/code-repositories/add-GitHub)
+> Link to docs: [Connect GitHub](https://docs-cortex.paloaltonetworks.com/r/Cortex-CLOUD/Cortex-Cloud-Runtime-Security-Documentation/GitHub-Cloud)
 
 
-Next we will set up the Prisma Cloud GitHub Application which will perform easy-to-configure code scanning for GitHub repos.
+Next we will set up the Cortex Cloud GitHub Application which will perform easy-to-configure code scanning for GitHub repos.
 
-Go to Prisma Cloud and create a new integration under **Settings > Connect Provider > Code & Build Providers**.
+Go to Cortex Cloud and create a new integration under **Settings > Data Collection > Data Sources > GitHub Instances**.
+Click **+ New Instance**
 
-![](images/prisma-code-build-providers.png)
+![alt](images/gh-add-instance.png)
 
-Under **Code Repositories**, select **GitHub**. 
-
-<img src="images/prisma-gh-app.png" width="600" height="500" />
 
 Follow the install wizard and **Authorize** your GitHub account.
 
-<img src="images/prisma-gh-auth.png" width="600" height="500" />
+Click Authorize, it will redirect to GitHub to install and authorize Application Secuirty on GitHub
+
+Click **Authorize Cortex AppSec us**
+
+<img src="images/gh-repo-auth.png" alt="image.png" />
+
 
 Select the repositories you would like to provide access to and click **Install & Authorize**.
 
-<img src="images/gh-select-repos.png" width="400" height="700" />
+<img src="images/gh-select-repo.png" alt="image.png" width="400" height="700" />
 
-Select the target repositories to scan now accessible from the Prisma Cloud wizard, then click **Next**.
+Select the target repositories to scan now accessible from the wizard, then click **Save**.
 
-<img src="images/prisma-select-repos.png" width="600" height="500" />
+<img src="images/gh-select-repo2.png" alt="image.png" width="600" height="500" />
 
-Click **Done** once completed. Navigate to **Settings > Providers > Repositories** to view the onboarded repo(s). 
+Click **Close** once completed. Navigate to **Inventory > Assets > Code > Repositories** to view the onboarded repo(s). 
 
-![](images/prisma-gh-done.png)
+![alt](images/gh-repo-done.png)
 
-Also navigate to **Application Security > Projects** to view the results coming from the integration.
+Also navigate to **Modules > Application Security > Issues > IaC Misconfigurations** to view the results coming from the integration.
 
-![](images/prisma-gh-app-results.png)
+![alt](images/gh-findings.png)
 
 ## Submit a Pull Request 2.0
 
-Lets push a change to test the integration. Navigate to GitHub and make a change to the s3 resource deployed earlier under `code/build/s3.tf`.
+Lets push a change to test the integration. Navigate to GitHub and make a change to the Google Storage Bucket resource deployed earlier under `code/build/gcs.tf`.
 
 
 
 
-Add the following line of code to the s3 resource definition. Then click **Commit changes...** once complete.
+Add the comment out the line of code (**public_access_prevention = "enforced"**) to the Google Storage Bucket resource definition. Then click **Commit changes...** once complete. It should looks like below:
 
 ```
-acl = "public-read-write"
+provider "google" {
+  project = "qwiklabs-gcp-03-fa7edfd03d8e" ##the project id of you lab instance
+  region  = "us-central1"
+}
+
+resource "google_storage_bucket" "sample" {
+  name          = "demo2-${random_id.Rand_suffix.hex}"
+  location      = "us-central1"
+  force_destroy = true
+
+  uniform_bucket_level_access = false
+
+  #public_access_prevention = "enforced" ##comment out this line of code for demo
+}
+
+resource "random_id" "Rand_suffix" {
+  byte_length = 4
+}
+
+output "Bucket_name" {
+  value = google_storage_bucket.sample.name
+}
+
 ```
-
-![](images/gh-edit-s3.png)
-
-
 Create a new branch and click **Propose changes**.
+![alt](images/gh-pr2.png)
 
-<img src="images/gh-propose-changes.png" width="450" height="525" />
 
 On the next page, review the diff then click **Create pull request**. Once gain, click **Create pull request** to open the pull request.
 
-Let the checks run against the pull request. Prisma Cloud can review pull requests and will add comments with proposed changes to give developers actionable feedback within their VCS platform.
+Let the checks run against the pull request. Cortex Cloud can review pull requests and will add comments with proposed changes to give developers actionable feedback within their VCS platform. You can click **Commit suggestion** and **commit changes** directly in the Github. We will not do this here, and will initiate a PR request in the Cortex Cloud later.
 
-![](images/gh-prisma-comments.png)
+![alt](images/gh-cc-fix1.png)
 
 
- When ready, click **Merge pull request** bypassing branch protection rules if still enabled.
-
+ When ready, select **Merge without waiting for requirements to be Met (bypass rules)** click **Bypass rules and merge** to merge the PR.
+![alt](images/gh-cc-fix2.png)
 
 Now that the change has been merged, navigate back to Terraform Cloud to view the pipeline running.
 
-![](images/tfc-plan-running.png)
-
-
-Check the **Post-plan** stage and view the results of the Prisma Cloud scan.
-
-![](images/tfc-post-plan.png)
+Check the **Pre-plan** stage and view the results of the Cortex Cloud scan.
+**Placeholder**
+![alt](images/tfc-pre-plan.png)
 
 Leave this as is for now. We will soon fix the error and retrigger the pipeline.
 
 
-## View scan results in Prisma Cloud
-Return to Prisma Cloud to view the results of all the scans that were just performed.
+## View scan results in Cortex Cloud
+Return to Cortex Cloud to view the results of all the scans that were just performed.
 
-Navigate to **Application Security > Projects > Overview** to view findings for all scans. Filter the results with the **Repository** drop-down menu.
+Navigate to **Modules > Application Security > Scans > Pull Request Scans** to view findings for all scans. You can find the PR request security check has been failed.
 
-![](images/prisma-appsec-projects.png)
+![alt](images/gh-pr-block.png)
 
-View relevant CI/CD Risks **Application Security > CI/CD Risks**:
+Click it and you will see the Overview of the Pull Request Scan.
 
-![](images/prisma-cicd-risks.png)
+![alt](images/block-overview.png)
 
-Get a full SBOM analysis under **Application Security > SBOM**:
+Click the **Configurations** Tab, you will see the Issues:
 
-![](images/prisma-sbom.png)
+![alt](images/config-fix1.png)
 
 
-Take a look at **Dashboards > Code Security** to get top-level reports.
+Click the issue **GCP Storage buckets are publicly accessible to all users misconfiguration detected in code** to get the details. 
 
-![](images/prisma-dashboard-code.png)
+![alt](images/config-fix2.png)
 
-Another useful view can be found under **Inventory > IaC Resources**
 
-![](images/prisma-inventory.png)
-
-## Enforcement Rules
-
-The level of enforcement applied to each code scan can be controlled under **Settings > Configure > Application Security > Enforcement Rules**
-
-![](images/prisma-enforcement-rules.png)
-
-These can be adjusted as a top-down policy or exceptions can be created for specific repositories / integrations.
-
-![](images/prisma-enforcement-rules1.png)
-
-![](images/prisma-enforcement-rules2.png)
-
-![](images/prisma-enforcement-rules3.png)
 
 
 
 ## Issue a PR-Fix
-Lets create a pull request from the Prisma Cloud console to apply a code fix. Navigate to **Application Security > Projects > Overview IaC Misconfiguration** then find the `dev_s3` bucket with the public access violations.
+Lets create a pull request from the Cortex Cloud console to apply a code fix. 
+Click the three dots at the top right. And Click **Open fix pull request**
+![alt](images/pr-fix1.png)
 
-![](images/prisma-pr-fix1.png)
+Wait a while a Pull Request will be generated to you Github Repo. Navigate back to GitHub and check the **Pull request** tab to see the fix Cortex Cloud submitted.
 
-Then click the **Submit** button in the top right to open a pull request.
-
-![](images/prisma-pr-fix2.png)
-
-Navigate back to GitHub and check the **Pull request** tab to see the fix Prisma Cloud submitted.
-
-![](images/gh-pr-fix1.png)
+![alt](images/pr-fix2.png)
 
 Drill into the pull request and inspect the file changes under the **Files changes** tab. Notice the changes made to remediate the original policy violation.
 
-![](images/gh-pr-fix2.png)
+![alt](images/pr-fix4.png)
 
 Go back to the **Coversation** tab and click **Merge the pull request** at the bottom to check this code into the main branch.
 
-![](images/gh-merge-pr-fix.png)
+![alt](images/pr-fix3.png)
 
-Check Terraform Cloud to view the plan succesfully run. No need to apply this run as we will use the earlier deployment for our next example.
+Check Terraform Cloud to view the plan succesfully run. No need to apply this run.
 
-![](images/tfc-pr-fix.png)
-
-
-## Drift Detection
-> [!NOTE]
-> Link to docs: [Setup Drift Detection](https://docs.prismacloud.io/en/classic/appsec-admin-guide/get-started/drift-detection)
-
-In this final section, we will use the pipeline we built to detect drift. Drift occurs when infrastructure running in the cloud becomes configured differntly from what was originally defined in code.
-
-This usually happens during a major incident, where DevOps and SRE teams make manual changes to quickly solve a problem, such as opening up ports to larger CIDR blocks or turning off HTTPS to find the problem. Sometimes lack of access and/or familiarity with IaC/CICD makes fixing an issue directly in the cloud easier than fixing in code and redeploying. If these aren’t reverted, they present security issues and it weakens the benefits of using IaC.
-
-We will use the S3 bucket deployed earlier to simulate drift in a resource configuration.
-
-> [!NOTE]
-> By default Prisma Cloud performs full resource scans on an hourly interval. 
+![alt](images/pr-fix5.png)
 
 
-Let's first examine the policies associated with drift. Go to **Governance > Overview** and serach for `Traced resources are manually modified`. Notice the policies for each CSP. Ensure the policy for AWS is enabled.
-
-![](images/prisma-traced-resource-policies.png)
-
-Next, go to the AWS Console under S3 buckets and add a new tag to the bucket created earlier.
-
-![](images/aws-s3-properties.png)
-
-For example, add a tag with the key/value pair `drift` = `true` and click **Save changes**.
-
-![](images/aws-tag-drift.png)
-
-On the next scan Prisma Cloud will detect this change and notify users that a resource configuration has changed from how it is defined in code. To view this, navigate to **Projects > IaC Misconfiguration** and filter for **Drift** under the **IaC Categories** dropdown menu.
-
-![](images/prisma-drift-result.png)
-
-Prisma Cloud provides the option to revert the change via the same pull request mechanism we just performed which would trigger a pipeline run and patch the resource.
-
-
-
-# Wrapping Up
+## Wrapping Up
 Congrats! In this workshop, we didn’t just learn how to identify and automate fixing misconfigurations — we learned how to bridge the gaps between Development, DevOps, and Cloud Security. We are now equipped with full visibility, guardrails, and remediation capabilities across the development lifecycle. We also learned how important and easy it is to make security accessible to our engineering teams.
 
 Try more of the integrations with other popular developer and DevOps tools. Share what you’ve found with other members of your team and show how easy it is to incorporate this into their development processes. 
 
-You can also check out the [Prisma Cloud DevDay](https://register.paloaltonetworks.com/securitydevdays) to experience more of the platform in action.
+You can also check out the [Cortex Cloud DevDay](https://register.paloaltonetworks.com/securitydevdays) to experience more of the platform in action.
