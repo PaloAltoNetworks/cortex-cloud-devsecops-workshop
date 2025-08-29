@@ -9,8 +9,8 @@ terraform {
 }
 
 provider "google" {
-  project = var.project_id
-  region  = var.region
+  project = "dark-influence-458420-e4"
+  region  = "us-central1"
 }
 
 resource "google_storage_bucket" "example" {
