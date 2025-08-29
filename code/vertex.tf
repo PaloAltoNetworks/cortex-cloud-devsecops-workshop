@@ -2,7 +2,7 @@
 variable "project_id" {
   description = "The ID of the Google Cloud project."
   type        = string
-  default     = "qwiklabs-gcp-03-fa7edfd03d8e"
+  default     = "dark-influence-458420-e4"
 }
 
 variable "region" {
